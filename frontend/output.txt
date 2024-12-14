@@ -1,0 +1,2166 @@
+1. eslint.config.js:
+import js from '@eslint/js'
+import globals from 'globals'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+
+export default [
+  { ignores: ['dist'] },
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    settings: { react: { version: '18.3' } },
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...react.configs.recommended.rules,
+      ...react.configs['jsx-runtime'].rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/jsx-no-target-blank': 'off',
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+]
+
+
+2. index.html:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <title>Fee SESMag Analyzer</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+3. package.json:
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "^4.1.5",
+    "axios": "^1.7.9",
+    "bootstrap": "^5.3.2",
+    "pdfjs-dist": "^4.9.155",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.1",
+    "react-dom": "^18.3.1",
+    "react-pdf": "^7.7.0",
+    "react-router-dom": "^7.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "vite": "^6.0.1"
+  }
+}
+
+
+4. vite.config.js:
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+
+
+5. src\App.css:
+/* Layout & Structure */
+.app-layout {
+  min-height: calc(100vh - 56px);
+  background-color: #f8f9fa;
+  position: relative;
+}
+
+.main-container {
+  padding: 1.5rem;
+  height: 100%;
+}
+
+.main-content-wrapper {
+  height: calc(100vh - 90px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Documents Panel */
+.documents-overlay {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  width: 320px;
+  height: calc(100vh - 56px);
+  background: white;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  z-index: 1040;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.documents-overlay.visible {
+  transform: translateX(0);
+}
+
+.documents-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background-color: #f8f9fa;
+}
+
+.documents-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Content Section */
+.content-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.main-view {
+  flex: 1;
+  min-height: 0;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Chat Section */
+.chat-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-container {
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container.chat-container-full {
+  height: calc(100vh - 200px);
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: #f8f9fa;
+}
+
+.message-input-container {
+  background: white;
+}
+
+/* Message Styling */
+.message-bubble {
+  max-width: 80%;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message-bubble.fee {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.message-bubble:not(.fee) {
+  background-color: white;
+  margin-left: auto;
+}
+
+/* Markdown Content Styling */
+.markdown-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content br {
+  margin: 0.5rem 0;
+}
+
+/* Analysis View */
+.analysis-results {
+  height: 100%;
+  overflow: auto;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: typing 1s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* Cards & UI Elements */
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.upload-section {
+  margin-bottom: 1.5rem;
+}
+
+/* File Upload Input */
+.file-upload-input {
+  border: 2px dashed #dee2e6;
+  border-radius: 0.5rem;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.file-upload-input:hover,
+.file-upload-input.dragging {
+  border-color: #0d6efd;
+  background-color: #f1f8ff;
+}
+
+/* PDF Viewer */
+.pdf-viewer-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-viewer {
+  flex: 1;
+  overflow: auto;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* react-pdf specific styles */
+.react-pdf__Document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.react-pdf__Page {
+  max-width: 100%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  background: white;
+}
+
+.react-pdf__Page__canvas {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.react-pdf__message {
+  padding: 20px;
+  color: #666;
+}
+
+.pdf-page {
+  background: white;
+}
+
+/* Utilities */
+.btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+/* Empty State */
+.main-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 120px);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .documents-overlay {
+    width: 100%;
+  }
+
+  .main-content-wrapper {
+    height: auto;
+  }
+
+  .chat-container {
+    height: 400px;
+  }
+
+  .chat-container.chat-container-full {
+    height: calc(100vh - 180px);
+  }
+
+  .pdf-viewer {
+    padding: 0.5rem;
+  }
+  
+  .react-pdf__Page {
+    margin-bottom: 0.5rem;
+  }
+
+  .message-bubble {
+    max-width: 90%;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .app-layout {
+    background: none;
+  }
+
+  .main-view {
+    box-shadow: none;
+  }
+}
+
+6. src\App.jsx:
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState } from 'react';
+import Header from './components/common/Header';
+import Home from './pages/Home';
+
+function App() {
+  const [showDocuments, setShowDocuments] = useState(false);
+
+  return (
+    <Router>
+      <div className="app-container">
+        <Header onToggleDocuments={() => setShowDocuments(!showDocuments)} />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Home showDocuments={showDocuments} onToggleDocuments={setShowDocuments} />} />
+          </Routes>
+        </main>
+        <footer className="py-3 bg-light">
+          <div className="container text-center">
+            <p className="mb-0 text-muted">Fee SESMag Document Analyzer</p>
+          </div>
+        </footer>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+
+7. src\index.css:
+/* Base Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Document Setup */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", 
+    "Noto Sans", "Liberation Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9fa;
+  color: #212529;
+  line-height: 1.5;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+/* Links */
+a {
+  color: #0d6efd;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+  color: #0a58ca;
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: #0d6efd;
+  color: white;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Form Elements */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+8. src\main.jsx:
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import './App.css'
+import App from './App'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+)
+
+9. src\components\Analysis\AnalysisResults.jsx:
+import React, { useState } from 'react';
+import FacetAnalysis from './FacetAnalysis';
+import InclusivityScore from './InclusivityScore';
+
+function AnalysisResults({ analysis }) {
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  if (!analysis) return null;
+
+  const renderOverallAssessment = () => (
+    <div className="card border-0 shadow-sm mb-4">
+      <div className="card-body">
+        <div className="mb-4">
+          <InclusivityScore score={analysis.overall_assessment.inclusivity_score} />
+        </div>
+
+        {/* Score Justification */}
+        {analysis.overall_assessment.score_justification && (
+          <div className="mb-4">
+            <h4 className="h6 mb-3">Score Justification</h4>
+            <div className="alert alert-info">
+              <i className="bi bi-info-circle-fill me-2"></i>
+              {analysis.overall_assessment.score_justification}
+            </div>
+          </div>
+        )}
+
+        {/* Major Concerns */}
+        {analysis.overall_assessment.major_concerns?.length > 0 && (
+          <div className="mb-4">
+            <h4 className="h6 mb-3 d-flex align-items-center">
+              <i className="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+              Major Concerns
+            </h4>
+            <div className="list-group">
+              {analysis.overall_assessment.major_concerns.map((concern, index) => (
+                <div key={index} className="list-group-item list-group-item-danger d-flex align-items-start gap-2">
+                  <i className="bi bi-exclamation-circle-fill mt-1"></i>
+                  <span>{concern}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Positive Aspects */}
+        {analysis.overall_assessment.positive_aspects?.length > 0 && (
+          <div className="mb-4">
+            <h4 className="h6 mb-3 d-flex align-items-center">
+              <i className="bi bi-check-circle-fill text-success me-2"></i>
+              Positive Aspects
+            </h4>
+            <div className="list-group">
+              {analysis.overall_assessment.positive_aspects.map((aspect, index) => (
+                <div key={index} className="list-group-item list-group-item-success d-flex align-items-start gap-2">
+                  <i className="bi bi-check-circle-fill mt-1"></i>
+                  <span>{aspect}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderFeesPerspective = () => (
+    <div className="card border-0 shadow-sm">
+      <div className="card-body">
+        <div className="alert alert-primary d-flex align-items-center mb-4">
+          <i className="bi bi-person-workspace me-3 fs-4"></i>
+          <div>
+            <h4 className="h6 mb-1">Fee's Analysis Lens</h4>
+            <p className="mb-0">Analysis provided from a high-SES technology user perspective with advanced access, 
+            high confidence, and strong technical literacy.</p>
+          </div>
+        </div>
+
+        {/* Technology Requirements Table */}
+        <div className="mb-4">
+          <h4 className="h6 mb-3">Technology Requirements Analysis</h4>
+          <div className="table-responsive">
+            <table className="table table-hover">
+              <thead className="table-light">
+                <tr>
+                  <th scope="col" style={{ width: '20%' }}>Category</th>
+                  <th scope="col" style={{ width: '40%' }}>Fee's Perspective</th>
+                  <th scope="col" style={{ width: '40%' }}>Inclusivity Considerations</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(analysis.fee_perspective.expectations || {}).map(([aspect, data]) => (
+                  <tr key={aspect}>
+                    <td className="text-capitalize fw-medium">
+                      {aspect.replace(/_/g, ' ')}
+                    </td>
+                    <td>{data.perspective}</td>
+                    <td>{data.consideration}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Detailed Facet Analysis */}
+        {Object.entries(analysis.facet_analysis || {}).map(([facet, data]) => (
+          <FacetAnalysis key={facet} facet={facet} data={data} />
+        ))}
+
+        {/* Recommendations */}
+        {analysis.fee_perspective.recommendations?.length > 0 && (
+          <div className="mt-4">
+            <h4 className="h6 mb-3 d-flex align-items-center">
+              <i className="bi bi-lightbulb-fill text-warning me-2"></i>
+              Fee's Recommendations
+            </h4>
+            <div className="list-group">
+              {analysis.fee_perspective.recommendations.map((rec, index) => (
+                <div key={index} className="list-group-item d-flex align-items-start gap-2">
+                  <i className="bi bi-arrow-right-circle-fill text-primary mt-1"></i>
+                  <span>{rec}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="analysis-results">
+      <div className="card border-0 shadow-sm">
+        <div className="card-header bg-white">
+          <ul className="nav nav-tabs card-header-tabs">
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
+                onClick={() => setActiveTab('overview')}
+              >
+                <i className="bi bi-clipboard-data me-2"></i>
+                Overview
+              </button>
+            </li>
+            <li className="nav-item">
+              <button 
+                className={`nav-link ${activeTab === 'fee' ? 'active' : ''}`}
+                onClick={() => setActiveTab('fee')}
+              >
+                <i className="bi bi-person-workspace me-2"></i>
+                Fee's Perspective
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        <div className="card-body">
+          <div className="tab-content">
+            {activeTab === 'overview' && renderOverallAssessment()}
+            {activeTab === 'fee' && renderFeesPerspective()}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AnalysisResults;
+
+10. src\components\Analysis\FacetAnalysis.jsx:
+import React, { useState } from 'react';
+
+function FacetAnalysis({ facet, data }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Check if there's any content to display
+  const hasContent = Object.values(data).some(items => items.length > 0);
+  if (!hasContent) return null;
+
+  const getIconForCategory = (category) => {
+    switch (category) {
+      case 'assumptions':
+        return 'bi-diagram-2';
+      case 'potential_issues':
+        return 'bi-exclamation-triangle';
+      case 'recommendations':
+        return 'bi-lightbulb';
+      default:
+        return 'bi-card-text';
+    }
+  };
+
+  const getColorForCategory = (category) => {
+    switch (category) {
+      case 'assumptions':
+        return 'text-primary';
+      case 'potential_issues':
+        return 'text-danger';
+      case 'recommendations':
+        return 'text-success';
+      default:
+        return 'text-body';
+    }
+  };
+
+  return (
+    <div className="card mb-3 border">
+      <div 
+        className="card-header bg-light cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="d-flex justify-content-between align-items-center">
+          <h5 className="h6 mb-0 text-capitalize">
+            {facet.replace(/_/g, ' ')} Analysis
+          </h5>
+          <button 
+            className="btn btn-link btn-sm p-0 text-muted"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+          >
+            <i className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+          </button>
+        </div>
+      </div>
+      
+      {isExpanded && (
+        <div className="card-body">
+          {Object.entries(data).map(([category, items]) => {
+            if (!items.length) return null;
+            
+            return (
+              <div key={category} className="mb-3">
+                <h6 className="text-capitalize mb-3 d-flex align-items-center">
+                  <i className={`bi ${getIconForCategory(category)} ${getColorForCategory(category)} me-2`}></i>
+                  {category.replace(/_/g, ' ')}
+                </h6>
+                <div className="list-group">
+                  {items.map((item, index) => (
+                    <div 
+                      key={index} 
+                      className="list-group-item d-flex align-items-start gap-2"
+                    >
+                      <i className={`bi ${getIconForCategory(category)} ${getColorForCategory(category)} mt-1`}></i>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default FacetAnalysis;
+
+11. src\components\Analysis\InclusivityScore.jsx:
+import React from 'react';
+
+function InclusivityScore({ score }) {
+  const percentage = score * 100;
+  
+  const getScoreInfo = (score) => {
+    if (score >= 0.7) {
+      return {
+        color: 'success',
+        icon: 'check-circle-fill',
+        message: 'Good inclusivity practices detected',
+        description: 'The document demonstrates strong consideration for accessibility and inclusivity.'
+      };
+    }
+    if (score >= 0.4) {
+      return {
+        color: 'warning',
+        icon: 'exclamation-circle-fill',
+        message: 'Some inclusivity concerns detected',
+        description: 'There are areas where accessibility and inclusivity could be improved.'
+      };
+    }
+    return {
+      color: 'danger',
+      icon: 'x-circle-fill',
+      message: 'Significant inclusivity issues detected',
+      description: 'Major improvements are needed to make the content more accessible and inclusive.'
+    };
+  };
+
+  const scoreInfo = getScoreInfo(score);
+
+  return (
+    <div className="card border-0 bg-light">
+      <div className="card-body">
+        <div className="row align-items-center">
+          <div className="col-md-4 text-center mb-3 mb-md-0">
+            <div className={`display-4 text-${scoreInfo.color} mb-2`}>
+              {percentage.toFixed(1)}%
+            </div>
+            <div className="h6 text-muted mb-0">Inclusivity Score</div>
+          </div>
+          
+          <div className="col-md-8">
+            <div className={`alert alert-${scoreInfo.color} mb-3`}>
+              <div className="d-flex align-items-center">
+                <i className={`bi bi-${scoreInfo.icon} me-2 fs-5`}></i>
+                <div>
+                  <div className="fw-bold">{scoreInfo.message}</div>
+                  <div className="small">{scoreInfo.description}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="progress" style={{ height: '0.5rem' }}>
+              <div
+                className={`progress-bar bg-${scoreInfo.color}`}
+                role="progressbar"
+                style={{ width: `${percentage}%` }}
+                aria-valuenow={percentage}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default InclusivityScore;
+
+12. src\components\Chat\ChatInterface.jsx:
+// frontend\src\components\Chat\ChatInterface.jsx
+import React, { useState, useEffect } from 'react';
+import MessageList from './MessageList';
+import MessageInput from './MessageInput';
+import { getDocumentConversations } from '../../services/api';
+import Loading from '../common/Loading';
+
+function ChatInterface({ documentId, analysis, fullHeight }) {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    if (documentId) {
+      loadConversations();
+    }
+  }, [documentId]);
+
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      const response = await getDocumentConversations(documentId);
+      setMessages(response);
+    } catch (err) {
+      setError('Failed to load conversation history');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNewMessage = (newMessages) => {
+    setMessages(prev => [...prev, ...newMessages]);
+  };
+
+  const handleUserMessage = (userMessage) => {
+    setMessages(prev => [...prev, userMessage]);
+  };
+
+  const handleSendStart = () => {
+    setIsTyping(true);
+  };
+
+  const handleSendEnd = () => {
+    setIsTyping(false);
+  };
+
+  if (!documentId) {
+    return (
+      <div className="card border-0 shadow-sm h-100">
+        <div className="card-body text-center py-5">
+          <i className="bi bi-chat-dots fs-1 text-muted mb-3 d-block"></i>
+          <h3 className="h5 mb-2">Select a Document to Start Chat</h3>
+          <p className="text-muted mb-0">Choose a document to begin analyzing with Fee</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`card border-0 shadow-sm ${fullHeight ? 'h-100' : ''}`}>
+      <div className="card-header bg-primary d-flex justify-content-between align-items-center py-3">
+        <div className="d-flex align-items-center">
+          <i className="bi bi-chat-dots text-white me-2"></i>
+          <h3 className="h5 mb-0 text-white">Chat with Fee</h3>
+        </div>
+        <div className="d-flex gap-2">
+          <button 
+            className="btn btn-sm btn-outline-light"
+            onClick={loadConversations}
+            title="Refresh conversation"
+          >
+            <i className="bi bi-arrow-clockwise"></i>
+          </button>
+          {!fullHeight && (
+            <button
+              className="btn btn-sm btn-outline-light"
+              onClick={() => setIsExpanded(!isExpanded)}
+              title={isExpanded ? "Collapse chat" : "Expand chat"}
+            >
+              <i className={`bi bi-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className={`card-body p-0 ${isExpanded ? '' : 'd-none'}`}>
+        <div className={`chat-container ${fullHeight ? 'chat-container-full' : ''}`}>
+          {loading ? (
+            <Loading message="Loading conversation..." />
+          ) : error ? (
+            <div className="alert alert-danger m-3">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-exclamation-circle me-2"></i>
+                <span>{error}</span>
+                <button 
+                  className="btn btn-sm btn-outline-danger ms-auto"
+                  onClick={loadConversations}
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <MessageList 
+                messages={messages} 
+                isTyping={isTyping}
+              />
+              <MessageInput 
+                documentId={documentId} 
+                onMessageSent={handleNewMessage}
+                onUserMessage={handleUserMessage}
+                disabled={!analysis}
+                onSendStart={handleSendStart}
+                onSendEnd={handleSendEnd}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default ChatInterface;
+
+13. src\components\Chat\MarkdownMessage.jsx:
+import React from 'react';
+
+function MarkdownMessage({ text }) {
+  const formatMarkdown = (text) => {
+    // Handle bold text
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Handle italic text
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Handle lists
+    text = text.replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>');
+    text = text.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    
+    // Handle line breaks
+    text = text.replace(/\n/g, '<br>');
+    
+    return text;
+  };
+
+  return (
+    <div 
+      className="markdown-content"
+      dangerouslySetInnerHTML={{ __html: formatMarkdown(text) }}
+    />
+  );
+}
+
+export default MarkdownMessage;
+
+14. src\components\Chat\MessageInput.jsx:
+import React, { useState } from 'react';
+import { sendChatMessage } from '../../services/api';
+
+function MessageInput({ documentId, onMessageSent, onUserMessage, disabled, onSendStart, onSendEnd }) {
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!message.trim() || disabled) return;
+
+    const currentMessage = message.trim();
+    setMessage(''); // Clear input immediately
+
+    // Create user message object
+    const userMessage = {
+      id: Date.now(), // Temporary ID
+      message: currentMessage,
+      is_fee: false,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Immediately display user message
+    onUserMessage(userMessage);
+    
+    try {
+      setError(null);
+      onSendStart?.();
+      
+      const response = await sendChatMessage(documentId, currentMessage);
+      
+      if (response.conversation && Array.isArray(response.conversation)) {
+        // Only send Fee's response since we've already shown the user message
+        const feeResponse = response.conversation.find(msg => msg.is_fee);
+        if (feeResponse && onMessageSent) {
+          onMessageSent([feeResponse]);
+        }
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setError(error.message || 'Failed to send message');
+    } finally {
+      onSendEnd?.();
+    }
+  };
+
+  return (
+    <div className="message-input-container border-top mt-auto">
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show m-2 py-2">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-exclamation-circle me-2"></i>
+            <span>{error}</span>
+            <button 
+              type="button" 
+              className="btn-close ms-auto"
+              onClick={() => setError(null)} 
+              aria-label="Close"
+            />
+          </div>
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="p-3">
+        <div className="input-group">
+          <input
+            type="text"
+            className="form-control"
+            placeholder={disabled ? "Please wait for analysis to complete..." : "Ask Fee about this document..."}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            disabled={disabled}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={disabled || !message.trim()}
+          >
+            <i className="bi bi-send me-2"></i>
+            <span className="d-none d-sm-inline">Send</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default MessageInput;
+
+15. src\components\Chat\MessageList.jsx:
+import React, { useEffect, useRef } from 'react';
+import MarkdownMessage from './MarkdownMessage';
+
+function MessageList({ messages, isTyping }) {
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+
+  const scrollToBottom = () => {
+    const container = messagesContainerRef.current;
+    const isScrolledToBottom = container && 
+      (container.scrollHeight - container.clientHeight <= container.scrollTop + 100);
+    
+    if (isScrolledToBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const renderTypingIndicator = () => (
+    <div className="message mb-3">
+      <div className="message-bubble fee bg-primary text-white d-inline-block p-3 rounded-3">
+        <div className="message-header mb-2">
+          <small className="text-white opacity-75">
+            <i className="bi bi-robot me-1"></i>
+            Fee
+          </small>
+        </div>
+        <div className="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (messages.length === 0 && !isTyping) {
+    return (
+      <div className="text-center p-5">
+        <i className="bi bi-chat-dots fs-1 text-muted mb-3 d-block"></i>
+        <h5 className="text-muted fw-normal">Start a Conversation</h5>
+        <p className="text-muted mb-0 small">Ask Fee about the document analysis</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="messages-container p-3" ref={messagesContainerRef}>
+      {messages.map((msg, index) => (
+        <div
+          key={msg.id || index}
+          className={`message mb-3 ${msg.is_fee ? '' : 'text-end'}`}
+        >
+          <div 
+            className={`message-bubble d-inline-block p-3 rounded-3 ${
+              msg.is_fee 
+                ? 'bg-primary text-white' 
+                : 'bg-light border'
+            }`}
+          >
+            <div className="message-header mb-2">
+              <small className={msg.is_fee ? 'text-white opacity-75' : 'text-muted'}>
+                {msg.is_fee ? (
+                  <>
+                    <i className="bi bi-robot me-1"></i>
+                    Fee
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-person me-1"></i>
+                    You
+                  </>
+                )}
+                <span className="ms-2">
+                  {new Date(msg.timestamp).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                  })}
+                </span>
+              </small>
+            </div>
+            <div className="message-content">
+              {msg.is_fee ? (
+                <MarkdownMessage text={msg.message} />
+              ) : (
+                msg.message
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+      {isTyping && renderTypingIndicator()}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+}
+
+export default MessageList;
+
+16. src\components\common\EmptyState.jsx:
+import React from 'react';
+
+function EmptyState({ 
+  icon, 
+  title, 
+  description, 
+  action, 
+  actionLabel = 'Get Started'
+}) {
+  return (
+    <div className="card text-center p-5">
+      <div className="mb-4">
+        <i className={`bi bi-${icon} fs-1 text-muted`}></i>
+      </div>
+      <h3 className="h5 mb-3">{title}</h3>
+      {description && (
+        <p className="text-muted mb-4">{description}</p>
+      )}
+      {action && (
+        <button 
+          className="btn btn-primary"
+          onClick={action}
+        >
+          <i className="bi bi-upload me-2"></i>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default EmptyState;
+
+17. src\components\common\Header.jsx:
+import React from 'react';
+
+function Header({ onToggleDocuments }) {
+  return (
+    <header className="bg-white border-bottom">
+      <nav className="navbar navbar-expand-lg py-2">
+        <div className="container-fluid">
+          <span className="navbar-brand d-flex align-items-center">
+            <i className="bi bi-file-text-fill text-primary me-2"></i>
+            <span className="fw-semibold">Fee SESMag</span>
+            <span className="ms-2 text-muted fw-normal">Document Analyzer</span>
+          </span>
+          
+          <button 
+            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+            onClick={onToggleDocuments}
+          >
+            <i className="bi bi-list fs-5"></i>
+            <span>Your Documents</span>
+            <i className="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default Header;
+
+18. src\components\common\Loading.jsx:
+function Loading({ message = 'Loading...' }) {
+    return (
+      <div className="d-flex flex-column align-items-center justify-content-center p-5">
+        <div className="spinner-border text-primary loading-spinner mb-3" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="text-muted mb-0">{message}</p>
+      </div>
+    );
+  }
+    
+  export default Loading;
+
+19. src\components\DocumentViewer\DocumentList.jsx:
+import React, { useEffect, useState } from 'react';
+import { getDocuments } from '../../services/api';
+import Loading from '../common/Loading';
+
+function DocumentList({ onSelectDocument, selectedDocument, isVisible }) {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getDocuments();
+      setDocuments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load documents:', err);
+      setError(err.message || 'Failed to load documents');
+      setDocuments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isVisible) return null;
+
+  if (loading) {
+    return <Loading message="Loading documents..." />;
+  }
+
+  if (!loading && documents.length === 0) {
+    return (
+      <div className="card shadow-sm">
+        <div className="card-body text-center py-4">
+          <i className="bi bi-file-earmark-text fs-1 text-muted mb-3 d-block"></i>
+          <h3 className="h5 mb-2">No Documents Yet</h3>
+          <p className="text-muted mb-0">Upload your first document to begin</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card shadow-sm overflow-hidden">
+      <div className="card-header bg-light d-flex justify-content-between align-items-center py-3">
+        <button 
+          className="btn btn-outline-primary btn-sm"
+          onClick={loadDocuments}
+          title="Refresh list"
+        >
+          <i className="bi bi-arrow-clockwise me-2"></i>
+          Refresh List
+        </button>
+      </div>
+
+      <div className="list-group list-group-flush">
+        {error && (
+          <div className="alert alert-danger m-3" role="alert">
+            <i className="bi bi-exclamation-circle me-2"></i>
+            {error}
+          </div>
+        )}
+        
+        {documents.map((doc) => (
+          <button
+            key={doc.id}
+            className={`list-group-item list-group-item-action border-0 ${
+              selectedDocument?.id === doc.id ? 'active' : ''
+            }`}
+            onClick={() => onSelectDocument(doc)}
+          >
+            <div className="d-flex align-items-center gap-3">
+              <div className="document-icon">
+                <i className={`bi bi-file-earmark-pdf fs-4 ${
+                  selectedDocument?.id === doc.id ? 'text-white' : 'text-primary'
+                }`}></i>
+              </div>
+              <div className="flex-grow-1 text-start">
+                <h3 className="h6 mb-1">{doc.title}</h3>
+                <p className={`small mb-0 ${
+                  selectedDocument?.id === doc.id ? 'text-white-50' : 'text-muted'
+                }`}>
+                  Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default DocumentList;
+
+20. src\components\DocumentViewer\PDFViewer.jsx:
+import React, { useState, useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+// Set the worker source
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+function PDFViewer({ file }) {
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.0);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Reset state when file changes
+    setError(null);
+    setLoading(true);
+    setPageNumber(1);
+  }, [file]);
+
+  if (!file) {
+    return (
+      <div className="pdf-viewer-container">
+        <div className="card h-100">
+          <div className="card-body d-flex flex-column align-items-center justify-content-center text-center py-5">
+            <div className="mb-4">
+              <i className="bi bi-file-earmark-pdf fs-1 text-muted"></i>
+            </div>
+            <h3 className="h5 mb-2">No Document Selected</h3>
+            <p className="text-muted mb-0">Select a document from the list to view its contents</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function onDocumentLoadSuccess({ numPages }) {
+    setNumPages(numPages);
+    setPageNumber(1);
+    setLoading(false);
+    setError(null);
+  }
+
+  function onDocumentLoadError(err) {
+    console.error('PDF Load Error:', err);
+    setError('Failed to load PDF. Please ensure the file is accessible and try again.');
+    setLoading(false);
+  }
+
+  return (
+    <div className="pdf-viewer-container">
+      <div className="card h-100">
+        <div className="card-header bg-light py-2">
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center">
+              <i className="bi bi-file-earmark-text me-2"></i>
+              <h2 className="h6 mb-0">Document Preview</h2>
+            </div>
+            <div className="d-flex align-items-center gap-3">
+              <div className="btn-group">
+                <button 
+                  className="btn btn-sm btn-outline-secondary" 
+                  onClick={() => setScale(prev => Math.max(0.5, prev - 0.1))}
+                  disabled={loading || error}
+                >
+                  <i className="bi bi-zoom-out"></i>
+                </button>
+                <button 
+                  className="btn btn-sm btn-outline-secondary" 
+                  onClick={() => setScale(1.0)}
+                  disabled={loading || error}
+                >
+                  100%
+                </button>
+                <button 
+                  className="btn btn-sm btn-outline-secondary" 
+                  onClick={() => setScale(prev => Math.min(2, prev + 0.1))}
+                  disabled={loading || error}
+                >
+                  <i className="bi bi-zoom-in"></i>
+                </button>
+              </div>
+              {!error && (
+                <div className="btn-group">
+                  <button 
+                    className="btn btn-sm btn-outline-secondary" 
+                    onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
+                    disabled={pageNumber <= 1 || loading}
+                  >
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                  <button 
+                    className="btn btn-sm btn-outline-secondary" 
+                    disabled
+                  >
+                    {loading ? '--' : `${pageNumber} / ${numPages || '--'}`}
+                  </button>
+                  <button 
+                    className="btn btn-sm btn-outline-secondary" 
+                    onClick={() => setPageNumber(prev => Math.min(numPages || prev, prev + 1))}
+                    disabled={pageNumber >= (numPages || pageNumber) || loading}
+                  >
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="card-body p-0">
+          <div className="pdf-viewer">
+            {error ? (
+              <div className="alert alert-danger m-3">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  <div>
+                    <h6 className="alert-heading mb-1">Failed to Load PDF</h6>
+                    <p className="mb-0 small">{error}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Document
+                file={file}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={
+                  <div className="text-center p-4">
+                    <div className="spinner-border text-primary mb-3" role="status">
+                      <span className="visually-hidden">Loading PDF...</span>
+                    </div>
+                    <p className="text-muted mb-0">Loading document...</p>
+                  </div>
+                }
+              >
+                <Page 
+                  pageNumber={pageNumber} 
+                  scale={scale}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  className="pdf-page"
+                  loading={
+                    <div className="text-center p-4">
+                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                        <span className="visually-hidden">Loading page...</span>
+                      </div>
+                    </div>
+                  }
+                />
+              </Document>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default PDFViewer;
+
+21. src\components\FileUpload\FileUploadForm.jsx:
+import React, { useState, useRef } from 'react';
+import { uploadDocument } from '../../services/api';
+
+function FileUploadForm({ onUploadSuccess, onClose }) {
+  const [file, setFile] = useState(null);
+  const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile?.type === 'application/pdf') {
+      setFile(droppedFile);
+      if (!title) {
+        setTitle(droppedFile.name.replace('.pdf', ''));
+      }
+    } else {
+      setError('Please upload a PDF file');
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      if (!title) {
+        setTitle(selectedFile.name.replace('.pdf', ''));
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!file || !title.trim()) {
+      setError('Please provide both a file and title');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setProgress(0);
+
+    try {
+      setProgress(25);
+      const response = await uploadDocument(file, title.trim());
+      setProgress(100);
+      
+      if (onUploadSuccess) {
+        onUploadSuccess(response);
+      }
+      
+      // Reset form
+      setFile(null);
+      setTitle('');
+      setProgress(0);
+      if (onClose) {
+        onClose();
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err.message || 'Failed to upload document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <div className="card-body">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="documentTitle" className="form-label">
+              Document Title
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="documentTitle"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter a descriptive title"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="mb-4">
+            <div
+              className={`file-upload-input ${isDragging ? 'dragging' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="text-center p-4">
+                {file ? (
+                  <>
+                    <i className="bi bi-file-earmark-pdf fs-1 text-primary mb-3"></i>
+                    <p className="mb-1">{file.name}</p>
+                    <p className="small text-muted mb-0">
+                      Click or drag to replace
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-cloud-upload fs-1 text-primary mb-3"></i>
+                    <p className="mb-1">Drag and drop your PDF here or click to browse</p>
+                    <p className="small text-muted mb-0">Supported format: PDF</p>
+                  </>
+                )}
+              </div>
+              <input
+                type="file"
+                className="d-none"
+                ref={fileInputRef}
+                accept=".pdf"
+                onChange={handleFileSelect}
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          {progress > 0 && (
+            <div className="mb-4">
+              <div className="progress">
+                <div 
+                  className="progress-bar progress-bar-striped progress-bar-animated"
+                  role="progressbar" 
+                  style={{ width: `${progress}%` }}
+                  aria-valuenow={progress} 
+                  aria-valuemin="0" 
+                  aria-valuemax="100"
+                >
+                  {progress}%
+                </div>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              <i className="bi bi-exclamation-circle me-2"></i>
+              {error}
+            </div>
+          )}
+
+          <div className="d-flex gap-2">
+            {onClose && (
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              className="btn btn-primary flex-grow-1"
+              disabled={loading || !file || !title.trim()}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-upload me-2"></i>
+                  Upload Document
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default FileUploadForm;
+
+22. src\pages\Home.jsx:
+import { useState, useCallback } from 'react';
+import { analyzeDocument } from '../services/api';
+import FileUploadForm from '../components/FileUpload/FileUploadForm';
+import DocumentList from '../components/DocumentViewer/DocumentList';
+import AnalysisResults from '../components/Analysis/AnalysisResults';
+import PDFViewer from '../components/DocumentViewer/PDFViewer';
+import Loading from '../components/common/Loading';
+import ChatInterface from '../components/Chat/ChatInterface';
+import EmptyState from '../components/common/EmptyState';
+
+function Home({ showDocuments, onToggleDocuments }) {
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeView, setActiveView] = useState('document');
+  const [showUpload, setShowUpload] = useState(false);
+
+  const constructFileUrl = useCallback((fileUrl) => {
+    if (!fileUrl) return null;
+    if (fileUrl.startsWith('http')) return fileUrl;
+    
+    // Remove any double slashes except after http/https
+    const url = `http://localhost:8000${fileUrl}`.replace(/([^:]\/)\/+/g, "$1");
+    console.log('Constructed PDF URL:', url); // Add this log
+    return url;
+}, []);
+
+  const handleDocumentSelect = async (document) => {
+    try {
+      setSelectedDocument({
+        ...document,
+        file: constructFileUrl(document.file)
+      });
+      setLoading(true);
+      setError(null);
+      onToggleDocuments(false);
+
+      const result = await analyzeDocument(document.id);
+      if (!result.fee_perspective_analysis) {
+        throw new Error('Invalid analysis data received');
+      }
+
+      setAnalysis(result.fee_perspective_analysis);
+    } catch (err) {
+      console.error('Analysis error:', err);
+      setError(err.message || 'Failed to analyze document');
+      setAnalysis(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUploadSuccess = async (document) => {
+    try {
+      const documentWithUrl = {
+        ...document,
+        file: constructFileUrl(document.file)
+      };
+      
+      setSelectedDocument(documentWithUrl);
+      setShowUpload(false);
+      await handleDocumentSelect(document);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err) {
+      console.error('Upload handling error:', err);
+      setError('Failed to process uploaded document');
+    }
+  };
+
+  const renderMainContent = () => {
+    if (!selectedDocument) {
+      return (
+        <div className="main-empty-state">
+          <EmptyState 
+            icon="file-earmark-text"
+            title="Select or Upload a Document"
+            description="Choose a document from the list or upload a new one to begin analysis"
+            action={() => setShowUpload(true)}
+            actionLabel="Upload New Document"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="main-content-wrapper">
+        {loading ? (
+          <div className="card">
+            <div className="card-body">
+              <Loading message="Analyzing document..." />
+            </div>
+          </div>
+        ) : error ? (
+          <div className="alert alert-danger">
+            <h4 className="alert-heading d-flex align-items-center">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              Analysis Failed
+            </h4>
+            <p className="mb-3">{error}</p>
+            <button
+              className="btn btn-outline-danger"
+              onClick={() => handleDocumentSelect(selectedDocument)}
+            >
+              <i className="bi bi-arrow-clockwise me-2"></i>
+              Retry Analysis
+            </button>
+          </div>
+        ) : (
+          <div className="content-section">
+            <div className="view-toggle mb-3">
+              <div className="btn-group w-100">
+                <button
+                  className={`btn ${activeView === 'document' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveView('document')}
+                >
+                  <i className="bi bi-file-text me-2"></i>
+                  Document View
+                </button>
+                <button
+                  className={`btn ${activeView === 'analysis' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveView('analysis')}
+                >
+                  <i className="bi bi-graph-up me-2"></i>
+                  Analysis View
+                </button>
+                <button
+                  className={`btn ${activeView === 'chat' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setActiveView('chat')}
+                >
+                  <i className="bi bi-chat-dots me-2"></i>
+                  Chat with Fee
+                </button>
+              </div>
+            </div>
+
+            <div className="main-view">
+              {activeView === 'document' ? (
+                <PDFViewer file={selectedDocument?.file} />
+              ) : activeView === 'analysis' ? (
+                <AnalysisResults analysis={analysis} />
+              ) : (
+                <div className="chat-view h-100">
+                  <ChatInterface 
+                    documentId={selectedDocument.id} 
+                    analysis={analysis}
+                    fullHeight={true}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="app-layout">
+      <div className={`documents-overlay ${showDocuments ? 'visible' : ''}`}>
+        <div className="documents-header">
+          <div className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">Your Documents</h5>
+          </div>
+        </div>
+        <div className="documents-content">
+          <div className="p-3">
+            <button 
+              className="btn btn-primary w-100"
+              onClick={() => {
+                setShowUpload(true);
+                onToggleDocuments(false);
+              }}
+            >
+              <i className="bi bi-cloud-upload me-2"></i>
+              Upload Document
+            </button>
+          </div>
+          <div className="px-3">
+            <DocumentList 
+              onSelectDocument={handleDocumentSelect}
+              selectedDocument={selectedDocument}
+              isVisible={true}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="main-container">
+        {showUpload && (
+          <div className="upload-section">
+            <div className="card">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h3 className="h5 mb-0">Upload New Document</h3>
+                  <button 
+                    className="btn btn-icon btn-sm btn-outline-secondary"
+                    onClick={() => setShowUpload(false)}
+                  >
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+              <div className="card-body">
+                <FileUploadForm 
+                  onUploadSuccess={handleUploadSuccess}
+                  onClose={() => setShowUpload(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {renderMainContent()}
+      </div>
+    </div>
+  );
+}
+
+export default Home;
+
+23. src\services\api.js:
+import axios from 'axios';
+
+const API_URL = 'http://localhost:8000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const uploadDocument = async (file, title) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    const response = await api.post('/documents/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw new Error(error.response?.data?.error || 'Failed to upload document');
+  }
+};
+
+export const analyzeDocument = async (documentId) => {
+    try {
+      const response = await api.post(`/documents/${documentId}/analyze/`);
+      
+      if (!response.data || !response.data.fee_perspective_analysis) {
+        throw new Error('Invalid analysis data received from server');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Analysis error:', error);
+      throw new Error(error.response?.data?.error || 'Failed to analyze document');
+    }
+  };
+
+export const getDocuments = async () => {
+  try {
+    const response = await api.get('/documents/');
+    // Handle both paginated and non-paginated responses
+    return response.data.results || response.data || [];
+  } catch (error) {
+    console.error('Get documents error:', error);
+    if (error.response?.status === 404) {
+      return []; // Return empty array for no documents
+    }
+    throw new Error(error.response?.data?.error || 'Failed to load documents');
+  }
+};
+
+export const getAnalysis = async (analysisId) => {
+  try {
+    const response = await api.get(`/analyses/${analysisId}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Get analysis error:', error);
+    throw new Error(error.response?.data?.error || 'Failed to load analysis');
+  }
+};
+
+export const sendChatMessage = async (documentId, message) => {
+    try {
+      const response = await api.post(`/documents/${documentId}/chat/`, 
+        { message: message },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      
+      if (!response.data || !response.data.conversation) {
+        throw new Error('Invalid response format from server');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Chat error:', error.response || error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to send message';
+      throw new Error(errorMessage);
+    }
+  };
+
+export const getDocumentConversations = async (documentId) => {
+  try {
+    const response = await api.get(`/documents/${documentId}/conversations/`);
+    return response.data;
+  } catch (error) {
+    console.error('Get conversations error:', error);
+    throw new Error(error.response?.data?.error || 'Failed to load conversations');
+  }
+};
+
